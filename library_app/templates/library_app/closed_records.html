@@ -1,0 +1,351 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Closed Records — LibraryOS{% endblock %}
+{% block page_title %}Closed Records{% endblock %}
+{% block breadcrumb %}Transactions / Closed Records{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+    <div>
+        <h1 class="page-title">Closed Records</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">Completed transactions and returned books</p>
+    </div>
+    <a href="{% url 'open_records' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Open Records
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-archive"></i> Returned Books History
+        </div>
+        <div class="card-stats">
+            <span class="badge badge-success">{{ records|length }} Records</span>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if records %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Member</th>
+                        <th style="width: 25%;">Book</th>
+                        <th style="width: 12%;">Issue Date</th>
+                        <th style="width: 12%;">Due Date</th>
+                        <th style="width: 12%;">Return Date</th>
+                        <th style="width: 10%;">Fine Paid</th>
+                        <th style="width: 9%;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>
+                            <div class="member-info">
+                                <div class="member-avatar">{{ record.member.name|slice:":1"|upper }}</div>
+                                <div class="member-details">
+                                    <div class="member-name">{{ record.member.name }}</div>
+                                    <div class="member-id">{{ record.member.member_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="book-info">
+                                <div class="book-title">{{ record.book.title|truncatechars:35 }}</div>
+                                <div class="book-author">{{ record.book.author }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ record.issue_date|date:"M d, Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-check"></i>
+                                {{ record.due_date|date:"M d, Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-undo-alt"></i>
+                                {{ record.return_date|date:"M d, Y"|default:"—" }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if record.fine_amount > 0 %}
+                                <div class="fine-paid">
+                                    <i class="fas fa-rupee-sign"></i>
+                                    <span class="fine-value">{{ record.fine_amount|floatformat:2 }}</span>
+                                </div>
+                            {% else %}
+                                <div class="no-fine">
+                                    <i class="fas fa-check"></i>
+                                    <span>No fine</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-success">
+                                <i class="fas fa-check-circle"></i> Closed
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-archive"></i>
+            <h3>No Closed Records</h3>
+            <p>No completed transactions yet. Returned books will appear here.</p>
+            <a href="{% url 'open_records' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-book-open"></i> View Open Records
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Premium Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table thead th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border);
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .data-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .data-table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateX(2px);
+    }
+    
+    .data-table tbody tr:hover td {
+        color: var(--text-primary);
+    }
+    
+    .data-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+    
+    /* Member Info Styles */
+    .member-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .member-avatar {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, var(--primary), var(--info));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    
+    .member-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .member-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+    
+    .member-id {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-family: monospace;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Book Info Styles */
+    .book-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .book-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+    
+    .book-author {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+    
+    /* Date Info Styles */
+    .date-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .date-info i {
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        width: 14px;
+    }
+    
+    /* Fine Paid Styles */
+    .fine-paid {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--danger);
+        font-weight: 600;
+    }
+    
+    .fine-paid i {
+        font-size: 0.7rem;
+    }
+    
+    .fine-paid .fine-value {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    
+    .no-fine {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--success);
+    }
+    
+    .no-fine i {
+        font-size: 0.75rem;
+    }
+    
+    .no-fine span {
+        font-size: 0.8rem;
+    }
+    
+    /* Badge Styles */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Card Stats */
+    .card-stats {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state p {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .data-table thead th {
+            padding: 0.75rem 1rem;
+            font-size: 0.65rem;
+        }
+        
+        .data-table td {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+        }
+        
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 0.9rem;
+        }
+        
+        .member-name, .book-title {
+            font-size: 0.75rem;
+        }
+        
+        .date-info {
+            font-size: 0.7rem;
+            white-space: normal;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            min-width: 800px;
+        }
+    }
+</style>
+{% endblock %}

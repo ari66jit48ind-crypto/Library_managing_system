@@ -1,0 +1,442 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Open Records — LibraryOS{% endblock %}
+{% block page_title %}Open Records{% endblock %}
+{% block breadcrumb %}Transactions / Open Records{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+    <div>
+        <h1 class="page-title">Open Records</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">Currently issued books with auto-calculated fines (₹2/day after due date)</p>
+    </div>
+    <a href="{% url 'issue_book' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Issue New Book
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-book-open"></i> Active Borrowings
+        </div>
+        <div class="card-stats">
+            <span class="badge badge-info">{{ records|length }} Active Records</span>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if records %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Member</th>
+                        <th style="width: 25%;">Book</th>
+                        <th style="width: 12%;">Issue Date</th>
+                        <th style="width: 12%;">Due Date</th>
+                        <th style="width: 10%;">Days Overdue</th>
+                        <th style="width: 10%;">Fine Amount</th>
+                        <th style="width: 8%;">Status</th>
+                        <th style="width: 5%;">Actions</th>
+                    </thead>
+                <tbody>
+                    {% for record in records %}
+                     <tr>
+                        <td>
+                            <div class="member-info">
+                                <div class="member-avatar">{{ record.member.name|slice:":1" }}</div>
+                                <div class="member-details">
+                                    <div class="member-name">{{ record.member.name }}</div>
+                                    <div class="member-id">{{ record.member.member_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="book-info">
+                                <div class="book-title">{{ record.book.title|truncatechars:35 }}</div>
+                                <div class="book-author">{{ record.book.author }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ record.issue_date|date:"M d, Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info {% if record.due_date < today %}overdue{% endif %}">
+                                <i class="fas fa-calendar-check"></i>
+                                {{ record.due_date|date:"M d, Y" }}
+                                {% if record.due_date < today %}
+                                    <span class="overdue-badge">Overdue</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% with days=record.days_overdue %}
+                                {% if days > 0 %}
+                                    <div class="overdue-days">
+                                        <i class="fas fa-clock"></i>
+                                        <span class="days-count">{{ days }} days</span>
+                                    </div>
+                                {% else %}
+                                    <div class="on-time">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>On time</span>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with fine=record.calculate_fine %}
+                                {% if fine > 0 %}
+                                    <div class="fine-amount">
+                                        <i class="fas fa-rupee-sign"></i>
+                                        <span class="fine-value">₹{{ fine|floatformat:2 }}</span>
+                                        <span class="fine-note">(₹2/day × {{ record.days_overdue }} days)</span>
+                                    </div>
+                                {% else %}
+                                    <div class="no-fine">
+                                        <i class="fas fa-check"></i>
+                                        <span>No fine</span>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% if record.status == 'open' %}
+                                <span class="badge badge-info">
+                                    <i class="fas fa-book"></i> Active
+                                </span>
+                            {% elif record.status == 'overdue' %}
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Overdue
+                                </span>
+                            {% else %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check"></i> Returned
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'return_book' record.pk %}" class="btn btn-success btn-sm" title="Return Book">
+                                <i class="fas fa-undo-alt"></i> Return
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h3>No Open Records</h3>
+            <p>All books have been returned or no books have been issued yet.</p>
+            <a href="{% url 'issue_book' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-plus-circle"></i> Issue a Book
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Premium Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table thead th {
+        padding: 1rem 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .data-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+    }
+    
+    .data-table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateX(2px);
+    }
+    
+    .data-table tbody tr:hover td {
+        color: var(--text-primary);
+    }
+    
+    .data-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+    
+    /* Member Info */
+    .member-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .member-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary), var(--info));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .member-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .member-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+    
+    .member-id {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+    
+    /* Book Info */
+    .book-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .book-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+    
+    .book-author {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+    
+    /* Date Info */
+    .date-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .date-info i {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+    
+    .date-info.overdue {
+        color: var(--danger);
+    }
+    
+    .date-info.overdue i {
+        color: var(--danger);
+    }
+    
+    .overdue-badge {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    /* Overdue Days */
+    .overdue-days {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--danger);
+    }
+    
+    .overdue-days i {
+        font-size: 0.75rem;
+    }
+    
+    .days-count {
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    
+    .on-time {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--success);
+    }
+    
+    .on-time i {
+        font-size: 0.75rem;
+    }
+    
+    /* Fine Amount */
+    .fine-amount {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--danger);
+        font-weight: 600;
+        flex-wrap: wrap;
+    }
+    
+    .fine-amount i {
+        font-size: 0.7rem;
+    }
+    
+    .fine-value {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    
+    .fine-note {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        font-weight: normal;
+    }
+    
+    .no-fine {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--success);
+    }
+    
+    .no-fine i {
+        font-size: 0.75rem;
+    }
+    
+    /* Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .badge-info {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--info);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Buttons */
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.7rem;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state p {
+        font-size: 0.85rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .data-table thead th {
+            font-size: 0.65rem;
+            padding: 0.75rem;
+        }
+        
+        .data-table td {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+        
+        .member-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+        
+        .member-name, .book-title {
+            font-size: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            min-width: 800px;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,188 @@
+<!-- return_form.html - No manual fine input field -->
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Return Book — LibraryOS{% endblock %}
+{% block page_title %}Return Book{% endblock %}
+{% block breadcrumb %}Transactions / Return Book{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Return Book</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">Auto-calculated fine based on overdue days</p>
+    </div>
+    <a href="{% url 'open_records' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Records
+    </a>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-undo-alt"></i> Return Book Confirmation
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Book & Member Information -->
+        <div style="background: var(--bg-hover); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        <i class="fas fa-user"></i> MEMBER
+                    </div>
+                    <div style="font-weight: 600; font-size: 1rem;">{{ record.member.name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{ record.member.member_id }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        <i class="fas fa-book"></i> BOOK
+                    </div>
+                    <div style="font-weight: 600;">{{ record.book.title }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ record.book.author }}</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        <i class="fas fa-calendar-plus"></i> ISSUE DATE
+                    </div>
+                    <div>{{ record.issue_date|date:"M d, Y" }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        <i class="fas fa-calendar-check"></i> DUE DATE
+                    </div>
+                    <div class="{% if record.due_date < today %}text-danger{% endif %}">
+                        {{ record.due_date|date:"M d, Y" }}
+                        {% if record.due_date < today %}
+                            <span class="overdue-badge" style="margin-left: 0.5rem;">
+                                <i class="fas fa-clock"></i> Overdue
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Fine Calculation Display -->
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.05)); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        <i class="fas fa-calculator"></i> AUTO CALCULATED FINE
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 800;">
+                        {% if auto_fine > 0 %}
+                            <span style="color: var(--danger);">₹{{ auto_fine }}</span>
+                        {% else %}
+                            <span style="color: var(--success);">₹0.00</span>
+                        {% endif %}
+                    </div>
+                    {% if auto_fine > 0 %}
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            ₹2 per day × {{ record.days_overdue }} days overdue
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="info-box">
+                    {% if auto_fine > 0 %}
+                        <div class="fine-details">
+                            <i class="fas fa-info-circle"></i>
+                            Fine is automatically calculated
+                        </div>
+                    {% else %}
+                        <div class="on-time-details">
+                            <i class="fas fa-check-circle"></i>
+                            No fine - Book returned on time
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Return Date</label>
+                <input type="date" name="return_date" class="form-input" value="{{ today|date:'Y-m-d' }}" readonly style="background: var(--bg-input); cursor: not-allowed;">
+                <div class="help-text" style="color: var(--text-muted); font-size: 0.7rem; margin-top: 0.25rem;">
+                    <i class="fas fa-info-circle"></i> Return date is automatically set to today
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes (Optional)</label>
+                <textarea name="notes" class="form-input" rows="2" placeholder="Any additional notes about the return..."></textarea>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check-circle"></i> Confirm Return
+                </button>
+                <a href="{% url 'open_records' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+
+        <div class="info-note" style="margin-top: 1.5rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.05); border-radius: var(--radius-sm); border-left: 3px solid var(--success);">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-robot" style="color: var(--success);"></i>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                    <strong>Auto Calculation System:</strong> Fine is automatically calculated at ₹2 per day after the 7-day due date.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-danger {
+        color: var(--danger);
+    }
+    
+    .overdue-badge {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .info-box {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+    }
+    
+    .fine-details {
+        color: var(--danger);
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .on-time-details {
+        color: var(--success);
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .help-text {
+        font-size: 0.7rem;
+    }
+    
+    .form-input[readonly] {
+        background: rgba(30, 41, 59, 0.5);
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

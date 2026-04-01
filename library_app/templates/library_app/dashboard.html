@@ -1,0 +1,114 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — LibraryOS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card" onclick="window.location.href='{% url 'member_list' %}'">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ total_members }}</div>
+        <div class="stat-label">Total Members</div>
+        <div class="stat-sub">{{ active_members }} active</div>
+    </div>
+    <div class="stat-card" onclick="window.location.href='{% url 'book_list' %}'">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-value">{{ total_books }}</div>
+        <div class="stat-label">Total Books</div>
+        <div class="stat-sub">{{ available_books }} available</div>
+    </div>
+    <div class="stat-card" onclick="window.location.href='{% url 'open_records' %}'">
+        <div class="stat-icon"><i class="fas fa-book-open"></i></div>
+        <div class="stat-value">{{ open_records }}</div>
+        <div class="stat-label">Open Records</div>
+        <div class="stat-sub">Currently issued</div>
+    </div>
+    <div class="stat-card" onclick="window.location.href='{% url 'closed_records' %}'">
+        <div class="stat-icon"><i class="fas fa-archive"></i></div>
+        <div class="stat-value">{{ closed_records }}</div>
+        <div class="stat-label">Closed Records</div>
+        <div class="stat-sub">Returned books</div>
+    </div>
+</div>
+
+<div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <!-- Recent Borrow Activity -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-history"></i> Recent Borrow Activity</div>
+            <a href="{% url 'open_records' %}" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_borrows %}
+            <div class="table-wrap">
+                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr><th>Member</th><th>Book</th><th>Due Date</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_borrows %}
+                        <tr>
+                            <td><div class="d-flex align-center gap-2"><div class="avatar" style="width: 32px; height: 32px;">{{ record.member.name|slice:":1" }}</div><div><strong>{{ record.member.name|truncatechars:20 }}</strong></div></div></td>
+                            <td>{{ record.book.title|truncatechars:25 }}</td>
+                            <td>{{ record.due_date|date:"M d, Y" }}</td>
+                            <td>{% if record.status == 'open' %}<span class="badge badge-info">Active</span>{% elif record.status == 'overdue' %}<span class="badge badge-danger">Overdue</span>{% else %}<span class="badge badge-success">Returned</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<div class="empty-state"><i class="fas fa-book-open"></i><p>No borrow records yet</p></div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Members -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-user-plus"></i> Recent Members</div>
+            <a href="{% url 'member_list' %}" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_members %}
+            <div class="table-wrap">
+                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr><th>Name</th><th>Member ID</th><th>Type</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for member in recent_members %}
+                        <tr>
+                            <td><div class="d-flex align-center gap-2"><div class="avatar" style="width: 32px; height: 32px;">{{ member.name|slice:":1" }}</div><div><strong>{{ member.name|truncatechars:20 }}</strong><br><span style="font-size: 11px;">{{ member.email|truncatechars:18 }}</span></div></div></td>
+                            <td><code style="color: var(--primary);">{{ member.member_id }}</code></td>
+                            <td><span class="badge badge-purple">{{ member.get_membership_type_display }}</span></td>
+                            <td>{% if member.status == 'active' %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">{{ member.status|title }}</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<div class="empty-state"><i class="fas fa-users"></i><p>No members yet</p></div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Books Alert -->
+{% if overdue_records > 0 %}
+<div class="alert alert-danger" style="margin-top: 1.5rem;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <div class="alert-content"><strong>{{ overdue_records }} books are overdue!</strong> Please remind members to return them.</div>
+</div>
+{% endif %}
+
+<style>
+    .data-table th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); background: rgba(0, 0, 0, 0.2); }
+    .data-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-secondary); vertical-align: middle; }
+    .data-table tr:hover td { background: rgba(99, 102, 241, 0.05); color: var(--text-primary); }
+    .stat-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .badge-purple { background: rgba(99, 102, 241, 0.15); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
+    .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+    .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; display: block; }
+</style>
+{% endblock %}

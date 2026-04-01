@@ -1,0 +1,138 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Issue a Book — LibraryOS{% endblock %}
+{% block page_title %}Issue a Book{% endblock %}
+{% block breadcrumb %}Transactions / Issue Book{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+    <div>
+        <h1 class="page-title">Issue a Book</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">Assign a book to a library member</p>
+    </div>
+    <a href="{% url 'open_records' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Records
+    </a>
+</div>
+
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-book-open"></i> Issue Details
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label required">Select Member</label>
+                {{ form.member }}
+                {% if form.member.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.member.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label required">Select Book</label>
+                {{ form.book }}
+                {% if form.book.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.book.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required">Issue Date</label>
+                    {{ form.issue_date }}
+                    {% if form.issue_date.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.issue_date.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Due Date</label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.due_date.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div class="help-text">Due date is set to 7 days from issue date</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes (Optional)</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.notes.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check-circle"></i> Issue Book
+                </button>
+                <a href="{% url 'open_records' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+
+        <div class="info-note" style="margin-top: 1.5rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.05); border-radius: var(--radius-sm); border-left: 3px solid var(--success);">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-info-circle" style="color: var(--success);"></i>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                    <strong>Note:</strong> Books must be returned within 7 days. Late returns incur a fine of ₹2 per day.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .help-text {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+    
+    .required::after {
+        content: " *";
+        color: var(--danger);
+        font-weight: bold;
+    }
+    
+    .error-message {
+        color: var(--danger);
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    @media (max-width: 640px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}

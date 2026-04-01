@@ -1,0 +1,121 @@
+{% extends 'library_app/base.html' %}
+{% block title %}{{ book.title }} — LibraryOS{% endblock %}
+{% block page_name %}Book Detail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span>Book</span> Details</h1>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a href="{% url 'book_edit' book.pk %}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'book_list' %}" class="btn btn-ghost">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start">
+    <div class="card">
+        <div class="card-body">
+            <div style="width:100%; aspect-ratio:3/4; background:linear-gradient(135deg, rgba(99,179,237,0.1), rgba(159,122,234,0.1)); border-radius:var(--radius-sm); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:60px">
+                📖
+            </div>
+            <h2 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:6px">{{ book.title }}</h2>
+            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px">by {{ book.author }}</p>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px">
+                <span class="badge badge-purple">{{ book.get_genre_display }}</span>
+                {% if book.status == 'available' %}<span class="badge badge-green">Available</span>
+                {% elif book.status == 'issued' %}<span class="badge badge-orange">Issued</span>
+                {% else %}<span class="badge badge-red">{{ book.get_status_display }}</span>{% endif %}
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:13px; padding:16px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border)">
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary)">
+                    <span>ISBN</span><code style="color:var(--accent-cyan)">{{ book.isbn }}</code>
+                </div>
+                {% if book.publisher %}
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary)">
+                    <span>Publisher</span><span style="color:var(--text-primary)">{{ book.publisher }}</span>
+                </div>
+                {% endif %}
+                {% if book.publication_year %}
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary)">
+                    <span>Year</span><span style="color:var(--text-primary)">{{ book.publication_year }}</span>
+                </div>
+                {% endif %}
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary)">
+                    <span>Total Copies</span><span style="color:var(--text-primary); font-weight:700">{{ book.total_copies }}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary)">
+                    <span>Available</span>
+                    <span style="font-weight:700; color:{% if book.available_copies > 0 %}var(--accent-green){% else %}var(--accent-red){% endif %}">
+                        {{ book.available_copies }}
+                    </span>
+                </div>
+            </div>
+
+            {% if book.description %}
+            <p style="margin-top:16px; font-size:13px; color:var(--text-secondary); line-height:1.6">{{ book.description }}</p>
+            {% endif %}
+
+            <div style="margin-top:20px; display:flex; flex-direction:column; gap:8px">
+                {% if book.available_copies > 0 %}
+                <a href="{% url 'issue_book' %}" class="btn btn-primary" style="justify-content:center">
+                    <i class="fas fa-book-open"></i> Issue This Book
+                </a>
+                {% endif %}
+                <a href="{% url 'book_edit' book.pk %}" class="btn btn-ghost" style="justify-content:center">
+                    <i class="fas fa-edit"></i> Edit Details
+                </a>
+                <a href="{% url 'book_delete' book.pk %}" class="btn btn-ghost" style="justify-content:center; color:var(--accent-red)">
+                    <i class="fas fa-trash-alt"></i> Delete Book
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-history" style="background:rgba(251,211,141,0.1); color:var(--accent-orange)"></i>
+                Borrow History ({{ records|length }})
+            </div>
+        </div>
+        <div class="table-wrap">
+            {% if records %}
+            <table>
+                <thead><tr><th>Member</th><th>Issue Date</th><th>Due Date</th><th>Return Date</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <div class="avatar" style="width:28px;height:28px;font-size:11px">{{ r.member.name|slice:":1" }}</div>
+                                <a href="{% url 'member_detail' r.member.pk %}" style="color:var(--text-primary); font-weight:500; text-decoration:none">
+                                    {{ r.member.name }}
+                                </a>
+                            </div>
+                        </td>
+                        <td style="font-size:12px">{{ r.issue_date }}</td>
+                        <td style="font-size:12px">{{ r.due_date }}</td>
+                        <td style="font-size:12px">{{ r.return_date|default:"—" }}</td>
+                        <td>
+                            {% if r.status == 'open' %}<span class="badge badge-blue">Open</span>
+                            {% elif r.status == 'overdue' %}<span class="badge badge-red">Overdue</span>
+                            {% else %}<span class="badge badge-green">Returned</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-book-open"></i><p>No borrow history yet</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

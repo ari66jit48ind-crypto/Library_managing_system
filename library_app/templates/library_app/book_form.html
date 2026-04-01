@@ -1,0 +1,193 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Book — LibraryOS{% endblock %}
+{% block page_title %}{{ action }} Book{% endblock %}
+{% block breadcrumb %}Management / Books / {{ action }} Book{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+    <div>
+        <h1 class="page-title">{{ action }} Book</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">
+            {% if action == 'Add' %}Add a new book to the catalog{% else %}Update book information{% endif %}
+        </p>
+    </div>
+    <a href="{% url 'book_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Catalog
+    </a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-plus-circle"></i> {% if action == 'Add' %}Book Information{% else %}Edit Book Details{% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required">Book Title</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.title.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Author</label>
+                    {{ form.author }}
+                    {% if form.author.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.author.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required">ISBN</label>
+                    {{ form.isbn }}
+                    {% if form.isbn.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.isbn.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Genre</label>
+                    {{ form.genre }}
+                    {% if form.genre.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.genre.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Publisher</label>
+                    {{ form.publisher }}
+                    {% if form.publisher.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.publisher.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Publication Year</label>
+                    {{ form.publication_year }}
+                    {% if form.publication_year.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.publication_year.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required">Total Copies</label>
+                    {{ form.total_copies }}
+                    {% if form.total_copies.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.total_copies.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Available Copies</label>
+                    {{ form.available_copies }}
+                    {% if form.available_copies.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.available_copies.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label required">Status</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.status.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.description.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="info-box" style="margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.05); border-radius: var(--radius-sm); border-left: 3px solid var(--success);">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-info-circle" style="color: var(--success);"></i>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                        <strong>Note:</strong> Available copies cannot exceed total copies. When available copies reach 0, book status automatically changes to "Issued".
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if action == 'Add' %}Save Book{% else %}Update Book{% endif %}
+                </button>
+                <a href="{% url 'book_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .required::after {
+        content: " *";
+        color: var(--danger);
+        font-weight: bold;
+    }
+    
+    .error-message {
+        color: var(--danger);
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .info-box {
+        margin-top: 1rem;
+    }
+    
+    @media (max-width: 640px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}

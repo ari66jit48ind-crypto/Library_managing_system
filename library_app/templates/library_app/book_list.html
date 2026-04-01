@@ -1,0 +1,458 @@
+{% extends 'library_app/base.html' %}
+{% load static %}
+
+{% block title %}Book Catalog — LibraryOS{% endblock %}
+{% block page_title %}Book Catalog{% endblock %}
+{% block breadcrumb %}Management / Books{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+    <div>
+        <h1 class="page-title">Book Catalog</h1>
+        <p class="page-subtitle" style="color: var(--text-muted); margin-top: 4px;">Manage your entire book collection</p>
+    </div>
+    <a href="{% url 'book_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Add New Book
+    </a>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="search-section" style="margin-bottom: 24px;">
+    <form method="GET" class="search-form">
+        <div class="search-bar">
+            <div class="search-input-wrap" style="flex: 2;">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ query }}" class="search-input" placeholder="Search by title, author or ISBN...">
+            </div>
+            <select name="genre" class="filter-select">
+                <option value="">All Genres</option>
+                {% for value, label in genres %}
+                <option value="{{ value }}" {% if filter_genre == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="filter-select">
+                <option value="">All Status</option>
+                <option value="available" {% if filter_status == 'available' %}selected{% endif %}>Available</option>
+                <option value="issued" {% if filter_status == 'issued' %}selected{% endif %}>Issued</option>
+                <option value="lost" {% if filter_status == 'lost' %}selected{% endif %}>Lost</option>
+                <option value="damaged" {% if filter_status == 'damaged' %}selected{% endif %}>Damaged</option>
+            </select>
+            <button type="submit" class="btn btn-secondary">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            {% if query or filter_genre or filter_status %}
+            <a href="{% url 'book_list' %}" class="btn btn-ghost">
+                <i class="fas fa-times"></i> Clear
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Books Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-book"></i> Books Collection
+        </div>
+        <div class="card-stats">
+            <span class="badge badge-info">{{ books|length }} Books</span>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if books %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Title / Author</th>
+                        <th style="width: 15%;">ISBN</th>
+                        <th style="width: 12%;">Genre</th>
+                        <th style="width: 10%;">Copies</th>
+                        <th style="width: 10%;">Available</th>
+                        <th style="width: 10%;">Status</th>
+                        <th style="width: 13%;">Actions</th>
+                    </thead>
+                <tbody>
+                    {% for book in books %}
+                    <tr>
+                        <td>
+                            <div class="book-info">
+                                <div class="book-title">{{ book.title }}</div>
+                                <div class="book-author">by {{ book.author }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="isbn-code">{{ book.isbn }}</div>
+                        </td>
+                        <td>
+                            <span class="genre-badge">{{ book.get_genre_display }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="copy-count">{{ book.total_copies }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if book.available_copies > 0 %}
+                                <span class="available-count">{{ book.available_copies }}</span>
+                            {% else %}
+                                <span class="unavailable-count">{{ book.available_copies }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if book.status == 'available' %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Available
+                                </span>
+                            {% elif book.status == 'issued' %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-book"></i> Issued
+                                </span>
+                            {% elif book.status == 'lost' %}
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Lost
+                                </span>
+                            {% else %}
+                                <span class="badge badge-secondary">
+                                    <i class="fas fa-tools"></i> Damaged
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'book_detail' book.pk %}" class="btn-icon" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'book_edit' book.pk %}" class="btn-icon" title="Edit Book">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'book_delete' book.pk %}" class="btn-icon btn-icon-danger" title="Delete Book" onclick="return confirm('Are you sure you want to delete this book?');">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book"></i>
+            <h3>No Books Found</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+            <a href="{% url 'book_add' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-plus-circle"></i> Add Your First Book
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Premium Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table thead th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border);
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .data-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .data-table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateX(2px);
+    }
+    
+    .data-table tbody tr:hover td {
+        color: var(--text-primary);
+    }
+    
+    .data-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+    
+    /* Book Info Styles */
+    .book-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    
+    .book-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    
+    .book-author {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        letter-spacing: 0.3px;
+    }
+    
+    /* ISBN Styles */
+    .isbn-code {
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: var(--text-accent);
+        letter-spacing: 0.5px;
+    }
+    
+    /* Genre Badge */
+    .genre-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--primary);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    
+    /* Copy Count Styles */
+    .text-center {
+        text-align: center;
+    }
+    
+    .copy-count {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    
+    .available-count {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--success);
+    }
+    
+    .unavailable-count {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--danger);
+    }
+    
+    /* Badge Styles */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .badge-secondary {
+        background: rgba(100, 116, 139, 0.15);
+        color: var(--secondary);
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .btn-icon:hover {
+        background: var(--bg-hover);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .btn-icon-danger:hover {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    /* Search Bar */
+    .search-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-input-wrap {
+        position: relative;
+        flex: 1;
+    }
+    
+    .search-input-wrap i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .filter-select {
+        padding: 0.75rem 1rem;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        cursor: pointer;
+        min-width: 140px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+    }
+    
+    .btn-ghost:hover {
+        background: var(--bg-hover);
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    /* Card Stats */
+    .card-stats {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state p {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .data-table thead th {
+            padding: 0.75rem 1rem;
+            font-size: 0.65rem;
+        }
+        
+        .data-table td {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+        }
+        
+        .book-title {
+            font-size: 0.8rem;
+        }
+        
+        .search-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-select {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            min-width: 700px;
+        }
+    }
+</style>
+{% endblock %}
